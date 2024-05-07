@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////' + '/home/voldermort/task-api/tasks.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////' + '/home/voldermort/task-api-project/tasks.db'
 db = SQLAlchemy(app)
 
 tasks = []
@@ -49,6 +49,24 @@ def create_task():
 def get_task(task_id):
     task = Task.query.get_or_404(task_id)
     return jsonify(task.title, task.description, task.completed)
+
+@app.route('/tasks/<int:task_id>', methods=['GET', 'PUT'])
+def update_task(task_id):
+    task_data = request.get_json()
+    task = Task.query.get_or_404(task_id)
+    task.title = task_data.get('title', task.title)
+    task.decription = task_data.get('description',task.description)
+    task.completed = task_data.get('completed', task.completed)
+    db.session.commit()
+    return jsonify({'id': task.id}), 200
+
+@app.errorhandler(404)
+def handle_not_found(error):
+    return jsonify({'error': 'Not found'}), 404
+
+@app.errorhandler(500)
+def handle_internal_error(error):
+    return jsonify({'error': 'Something went wrong'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
