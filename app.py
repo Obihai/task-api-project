@@ -55,8 +55,9 @@ def update_task(task_id):
     task_data = request.get_json()
     task = Task.query.get_or_404(task_id)
     task.title = task_data.get('title', task.title)
-    task.decription = task_data.get('description',task.description)
-    task.completed = task_data.get('completed', task.completed)
+    task.description = task_data.get('description')
+    task.completed = task_data.get('completed')
+    db.session.add(task)
     db.session.commit()
     return jsonify({'id': task.id}), 200
 
