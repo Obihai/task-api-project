@@ -2,6 +2,7 @@ from flask import Flask
 from flask import jsonify
 from flask import request
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
 
 
 app = Flask(__name__)
@@ -23,6 +24,8 @@ class Task(db.Model):
     title = db.Column(db.String(80), nullable=False)
     description = db.Column(db.String(120), nullable=False)
     completed = db.Column(db.Boolean, nullable=False)
+    username = db.Column(db.string(80), unique=True, nullable=False)
+    password_hash = db.Column(db.string(120), nullable=False)
 
 @app.route('/')
 def hello_world():
