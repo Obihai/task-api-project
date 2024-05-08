@@ -61,6 +61,13 @@ def update_task(task_id):
     db.session.commit()
     return jsonify({'id': task.id}), 200
 
+@app.route('/tasks/<int:task_id>', methods=['GET', 'PUT', 'DELETE'])
+def delete_task(task_id):
+    task = Task.query.get_or_404(task_id)
+    db.session.delete(task)
+    db.session.commit()
+    return jsonify({'message': 'Task deleted'}), 200
+
 @app.errorhandler(404)
 def handle_not_found(error):
     return jsonify({'error': 'Not found'}), 404
