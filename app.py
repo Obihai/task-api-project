@@ -63,10 +63,15 @@ def update_task(task_id):
 
 @app.route('/tasks/<int:task_id>', methods=['GET', 'PUT', 'DELETE'])
 def delete_task(task_id):
-    task = Task.query.get_or_404(task_id)
-    db.session.delete(task)
-    db.session.commit()
-    return jsonify({'message': 'Task deleted'}), 200
+    task = Task.query.get(task_id)
+    if not task:
+        return jsonify({'error': 'Task not found'}), 404
+    try:
+        db.session.delete(task)
+        db.session.commit()
+        return jsonify({'message': 'Task deleted'}), 200
+    except Exception as e:
+        return jsonify({'error': 'Somethig went wrong while deleting the task'}), 500
 
 @app.errorhandler(404)
 def handle_not_found(error):
