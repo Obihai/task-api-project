@@ -1,9 +1,13 @@
 from flask import Flask
 from flask import jsonify
 from flask import request
+from flask import flash, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import login_user, logout_user
 from flask_login import UserMixin
 from flask_login import LoginManager
+from flask_login import login_required
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 app = Flask(__name__)
@@ -31,6 +35,12 @@ class Task(db.Model, UserMixin):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(120), nullable=False)
 
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -41,6 +51,7 @@ def hello_world():
     return 'Hello from your Task API!'
 
 @app.route('/tasks', methods=['GET'])
+@login_required
 def get_tasks():
     tasks = Task.query.all()
     output = []
@@ -58,6 +69,7 @@ def create_task():
     return jsonify({'id': new_task.id}), 201
 
 @app.route('/tasks/<int:task_id>', methods=['GET'])
+@login_required
 def get_task(task_id):
     task = Task.query.get_or_404(task_id)
     return jsonify(task.title, task.description, task.completed)
@@ -84,6 +96,26 @@ def delete_task(task_id):
         return jsonify({'message': 'Task deleted'}), 200
     except Exception as e:
         return jsonify({'error': 'Somethig went wrong while deleting the task'}), 500
+
+@app.route('/login', methods=['POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+    user = Task.query.filter_by(username=username).first()
+
+    if user and user.check_password(password):
+        login_user(user)
+        return jsonify({'message': 'Logged in successfully'}), 200
+    else:
+        return jsonify({'error': 'Invalid username or password'}), 400
+    
+@app.route('/logout')
+def logout():
+    logout_user()
+    return jsonify({'message': 'Logged out successfully'}), 200
+
 
 @app.errorhandler(404)
 def handle_not_found(error):
